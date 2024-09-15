@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Create</title>
+  <link rel="stylesheet" href="/static/style.css"/>
+</head>
+<body>
+    <h1>Event Create</h1>
+    <form id="createEventForm">
+        <label for="name">Event Name:</label>
+        <input type="text" id="name" name="name" required>
+
+        <label for="description">Event Description:</label>
+        <textarea id="description" name="description" rows="4" required></textarea>
+
+        <label for="location">Event Location:</label>
+        <input type="text" id="location" name="location" required>
+
+        <label for="dateTime">Event Date & Time:</label>
+        <input type="datetime-local" id="dateTime" name="dateTime" required>
+
+        <button type="submit">Create Event</button>
+    </form>
+
+    <script>
+        const eventCreateForm = document.getElementById("eventCreateForm");
+        const token = localStorage.getItem("authToken");
+
+        eventCreateForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(eventCreateForm);
+            // const formData = new FormData(event.target);
+            // const eventData = {
+            //     name: formData.get("name"),
+            //     description: formData.get("description"),
+            //     location: formData.get("location"),
+            //     dateTime: formData.get("dateTime")
+            // };
+            const apiEndpoint = "http://localhost:8080/users/events";
+
+            try {
+                const response = await fetch(apiEndpoint, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `${token}`,
+                        "Content-Type": "application/json"
+                    },
+                    //body: JSON.stringify(eventData)
+                    body: JSON.stringify(Object.fromEntries(formData))
+                });
+
+                if (response.ok) {
+                    alert("Event created successfully!");
+                } else {
+                    console.error("Failed to create event.");
+                }
+            } catch (error) {
+                console.error("Error signing up:", error);
+                alert("An error occurred");
+            }
+        });
+    </script>
+</body>
+</html>

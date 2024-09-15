@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Login</title>
+  <link rel="stylesheet" href="/static/style.css"/>
+</head>
+<body>
+    <h1>User Login</h1>
+    <form id="loginForm">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required><br><br>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="pwd" required><br><br>
+
+        <button type="submit">Log In</button>
+    </form>
+
+    <script>
+        const loginForm = document.getElementById("loginForm");
+
+        loginForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(loginForm);
+
+            const apiEndpoint = "http://localhost:8080/users/login"; // Adjust API endpoint as needed
+
+            try {
+                const response = await fetch(apiEndpoint, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(Object.fromEntries(formData))
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // Store the JWT token
+                    const token = data.token;
+                    localStorage.setItem("authToken", token); // Store token in localStorage
+
+                    // Handle successful login (e.g., redirect to a dashboard)
+                    alert("Login successful!");
+                    window.location.href = "/user-dashboard"; // Redirect to a dashboard or another page
+                } else {
+                    // Handle error (e.g., display error message)
+                    const errorData = await response.json();
+                    alert(`Login failed: ${errorData.message}`);
+                }
+            } catch (error) {
+                console.error("Error logging in:", error);
+                alert("An error occurred during login.");
+            }
+        });
+    </script>
+</body>
+</html>
