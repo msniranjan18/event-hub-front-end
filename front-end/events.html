@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Events List</title>
+  <link rel="stylesheet" href="/static/style.css"/>
+  <style>
+      /* Basic styling for the events page */
+      body {
+          font-family: Arial, sans-serif;
+          margin: 20px;
+      }
+      .event-list {
+          margin-top: 20px;
+      }
+      .event-item {
+          border: 1px solid #ddd;
+          padding: 10px;
+          margin-bottom: 10px;
+          border-radius: 5px;
+      }
+      .event-item button {
+          margin-right: 10px;
+      }
+      .register-button {
+          background-color: #4CAF50; /* Green */
+          color: white;
+      }
+      .cancel-button {
+          background-color: #f44336; /* Red */
+          color: white;
+      }
+  </style>
+</head>
+<body>
+    <h1>Events List</h1>
+    <button onclick="logout()">Logout</button> 
+    <button onclick="fetchRegistredEvents()">Registered Events</button>
+    <div class="event-list" id="eventList"></div>
+
+    <script>
+        async function fetchEvents() {
+            const token = localStorage.getItem("authToken");
+            const apiEndpoint = "http://localhost:8080/events"; // Adjust endpoint as needed
+
+            try {
+                const response = await fetch(apiEndpoint, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `${token}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    renderEvents(data.events);
+                } else {
+                    console.error("Failed to fetch events.");
+                }
+            } catch (error) {
+                console.error("Error fetching events:", error);
+            }
+        }
+
+        function renderEvents(events) {
+            const eventList = document.getElementById("eventList");
+            eventList.innerHTML = ""; // Clear previous content
+
+            events.forEach(event => {
+                const eventElement = document.createElement("div");
+                eventElement.className = "event-item";
+                eventElement.innerHTML = `
+                    <h3>${event.Name}</h3>
+                    <p>${event.Description}</p>
+                    <p><strong>Location:</strong> ${event.Location}</p>
+                    <p><strong>Date & Time:</strong> ${new Date(event.DateTime).toLocaleString()}</p>
+                    <button class="register-button" onclick="registerEvent(${event.ID})">Register</button>
+                    <button class="cancel-button" onclick="cancelEvent(${event.ID})">Cancel</button>
+                `;
+                eventList.appendChild(eventElement);
+            });
+        }
+
+        async function registerEvent(eventId) {
+            const token = localStorage.getItem("authToken");
+            const apiEndpoint = `http://localhost:8080/events/${eventId}/register`; // Adjust endpoint as needed
+
+            try {
+                const response = await fetch(apiEndpoint, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `${token}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (response.ok) {
+                    alert("Successfully registered for the event.");
+                    // Optionally, re-fetch the events list
+                    fetchEvents();
+                } else {
+                    console.error("Failed to register for the event.");
+                }
+            } catch (error) {
+                console.error("Error registering for the event:", error);
+            }
+        }
+
+        async function cancelEvent(eventId) {
+            const token = localStorage.getItem("authToken");
+            const apiEndpoint = `http://localhost:8080/events/${eventId}/cancel`; // Adjust endpoint as needed
+
+            try {
+                const response = await fetch(apiEndpoint, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `${token}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (response.ok) {
+                    alert("Successfully canceled registration for the event.");
+                    // Optionally, re-fetch the events list
+                    fetchEvents();
+                } else {
+                    console.error("Failed to cancel event registration.");
+                }
+            } catch (error) {
+                console.error("Error canceling event registration:", error);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("authToken");
+            window.location.href = "/login"; // Redirect to login page
+        }
+
+        function fetchRegistredEvents() {
+            window.location.href = "/registered-event-list"; // Redirect to login page
+        }
+
+        // Fetch events when the page loads
+        fetchEvents();
+    </script>
+</body>
+</html>
