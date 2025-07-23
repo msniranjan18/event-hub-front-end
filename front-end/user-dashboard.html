@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css"/>
+    <style>
+        /* Basic styling for the user dashboard page */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .section h2 {
+            margin-top: 0;
+        }
+        .form-container input, .form-container textarea, .form-container button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .form-container button {
+            background-color: #4CAF50; /* Green */
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .form-container button:hover {
+            background-color: #45a049;
+        }
+        .form-container .cancel-button {
+            background-color: #f44336; /* Red */
+        }
+        .form-container .cancel-button:hover {
+            background-color: #e53935;
+        }
+        .event-item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .event-item button {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>User Dashboard</h1>
+        <button onclick="logout()">Logout</button>
+
+        <!-- Section for creating events -->
+        <div class="section">
+            <h2>Create Event</h2>
+            <div class="form-container">
+                <form id="createEventForm">
+                    <label for="name">Event Name:</label>
+                    <input type="text" id="name" name="name" required>
+
+                    <label for="description">Event Description:</label>
+                    <textarea id="description" name="description" rows="4" required></textarea>
+
+                    <label for="location">Event Location:</label>
+                    <input type="text" id="location" name="location" required>
+
+                    <label for="dateTime">Event Date & Time:</label>
+                    <input type="datetime-local" id="dateTime" name="dateTime" required>
+
+                    <button type="submit">Create Event</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Section for listing registered events -->
+        <div class="section">
+            <h2>Registered Events</h2>
+            <div id="eventList"></div>
+        </div>
+
+        <!-- Section for changing password -->
+        <div class="section">
+            <h2>Change Password</h2>
+            <div class="form-container">
+                <form id="changePasswordForm">
+                    <label for="currentPassword">Current Password:</label>
+                    <input type="password" id="currentPassword" name="currentPassword" required>
+
+                    <label for="pwd">New Password:</label>
+                    <input type="password" id="pwd" name="pwd" required>
+
+                    <label for="confirmPassword">Confirm New Password:</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+
+                    <button type="submit">Change Password</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Section for deleting the account -->
+        <div class="section">
+            <h2>Delete Account</h2>
+            <button onclick="deleteAccount()">Delete My Account</button>
+        </div>
+    </div>
+
+    <script>
+        const apiEndpoint = "http://localhost:8080";
+        const token = localStorage.getItem("authToken");
+
+        // Fetch events and render them
+        async function fetchEvents() {
+            try {
+                const response = await fetch(`${apiEndpoint}/events`, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `${token}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    renderEvents(data.events);
+                } else {
+                    console.error("Failed to fetch events.");
+                }
+            } catch (error) {
+                console.error("Error fetching events:", error);
+            }
+        }
+
+        function renderEvents(events) {
+            const eventList = document.getElementById("eventList");
+            eventList.innerHTML = ""; // Clear previous content
+
+            events.forEach(event => {
+                const eventElement = document.createElement("div");
+                eventElement.className = "event-item";
+                eventElement.innerHTML = `
+                    <h3>${event.Name}</h3>
+                    <p>${event.Description}</p>
+                    <p><strong>Location:</strong> ${event.Location}</p>
+                    <p><strong>Date & Time:</strong> ${new Date(event.DateTime).toLocaleString()}</p>
+                    <button onclick="deleteEvent(${event.ID})">Delete</button>
+                `;
+                eventList.appendChild(eventElement);
+            });
+        }
+
+        // Handle event creation
+        document.getElementById("createEventForm").addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            const eventData = {
+                name: formData.get("name"),
+                description: formData.get("description"),
+                location: formData.get("location"),
+                dateTime: formData.get("dateTime")
+            };
+
+            try {
+                const response = await fetch(`${apiEndpoint}/events`, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `${token}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(eventData)
+                });
+
+                if (response.ok) {
+                    alert("Event created successfully!");
+                    fetchEvents(); // Refresh the event list
+                } else {
+                    console.error("Failed to create event.");
+                }
+            } catch (error) {
+                console.error("Error creating event:", error);
+            }
+        });
+
+        // Handle event deletion
+        async function deleteEvent(eventId) {
+            try {
+                const response = await fetch(`${apiEndpoint}/events/${eventId}`, {
+                    method: "DELETE",
+                    headers: {
+                        "Authorization": `${token}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (response.ok) {
+                    alert("Event deleted successfully!");
+                    fetchEvents(); // Refresh the event list
+                } else {
+                    console.error("Failed to delete event.");
+                }
+            } catch (error) {
+                console.error("Error deleting event:", error);
+            }
+        }
+
+        // Handle password change
+        document.getElementById("changePasswordForm").addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            const currentPassword = formData.get("currentPassword");
+            const pwd = formData.get("pwd");
+            const confirmPassword = formData.get("confirmPassword");
+
+            if (pwd !== confirmPassword) {
+                alert("New passwords do not match.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${apiEndpoint}/users/${emailId}`, {
+                    method: "PUT",
+                    headers: {
+                        "Authorization": `${token}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        pwd
+                    })
+                });
+
+                if (response.ok) {
+                    alert("Password changed successfully!");
+                } else {
+                    console.error("Failed to change password.");
+                }
+            } catch (error) {
+                console.error("Error changing password:", error);
+            }
+        });
+
+        // Handle account deletion
+        async function deleteAccount() {
+            if (confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+                try {
+                    const response = await fetch(`${apiEndpoint}/users/${emailId}`, {
+                        method: "DELETE",
+                        headers: {
+                            "Authorization": `${token}`,
+                            "Content-Type": "application/json"
+                        }
+                    });
+
+                    if (response.ok) {
+                        alert("Account deleted successfully!");
+                        localStorage.removeItem("authToken");
+                        window.location.href = "/login"; // Redirect to login page
+                    } else {
+                        console.error("Failed to delete account.");
+                    }
+                } catch (error) {
+                    console.error("Error deleting account:", error);
+                }
+            }
+        }
+
+        // Handle logout
+        function logout() {
+            localStorage.removeItem("authToken");
+            window.location.href = "/login"; // Redirect to login page
+        }
+
+        // Fetch events on page load
+        fetchEvents
