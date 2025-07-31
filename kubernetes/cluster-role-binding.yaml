@@ -1,0 +1,13 @@
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: ClusterRoleBinding
+# metadata:
+#   name: eventhub-frontend-role-binding
+#   namespace: eventhub
+# subjects:
+#   - kind: ServiceAccount
+#     name: eventhub-frontend-service-account
+#     namespace: eventhub-frontend
+# roleRef:
+#   kind: ClusterRole
+#   name: eventhub-frontend-role
+#   apiGroup: rbac.authorization.k8s.io
